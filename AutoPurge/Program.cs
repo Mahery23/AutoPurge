@@ -16,7 +16,7 @@ namespace AutoPurge
         {
             // Chemin vers le fichier JSON de configuration.
             // Veuillez adapter ce chemin à l'emplacement réel de votre fichier config.json.
-            string configFilePath = @"C:\Path\To\Your\config.json";
+            string configFilePath = @"C:\Users\steav\source\repos\AutoPurge\AutoPurge\bin\Debug\config.json";
 
             // Création d'une instance du service de configuration en passant le chemin du fichier
             ConfigService configService = new ConfigService(configFilePath);
