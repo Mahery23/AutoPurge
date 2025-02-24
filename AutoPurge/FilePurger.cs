@@ -33,7 +33,7 @@ namespace AutoPurge
         /// - Son extension doit figurer dans la liste des extensions autorisées (si définie).
         /// - Si une liste de noms est fournie, le nom du fichier doit contenir au moins l'un de ces mots.
         /// - Si une liste d'exceptions est définie, le nom du fichier ne doit pas contenir l'un de ces éléments.
-        /// Si aucun fichier n'est supprimé, un message est logué pour indiquer que tous les fichiers sont récents.
+        /// Si aucun fichier n'est supprimé, un message approprié est logué : soit le dossier est vide, soit tous les fichiers sont récents.
         /// </summary>
         /// <param name="pathConfig">Configuration spécifique au chemin de purge.</param>
         public void PurgeFiles(PathConfig pathConfig)
@@ -46,11 +46,18 @@ namespace AutoPurge
                     throw new DirectoryNotFoundException("Le dossier spécifié n'existe pas : " + pathConfig.Chemin);
                 }
 
-                // Calcule la date limite (cutoffDate) en soustrayant le nombre de jours définis (JoursEnArriere) à la date actuelle
-                DateTime cutoffDate = DateTime.Now.AddDays(-pathConfig.JoursEnArriere);
-
                 // Récupère tous les fichiers du dossier et de ses sous-dossiers
                 string[] files = Directory.GetFiles(pathConfig.Chemin, "*", SearchOption.AllDirectories);
+
+                // Cas 1 : Le dossier est vide
+                if (files.Length == 0)
+                {
+                    _logger.LogInfo("Le dossier " + pathConfig.Chemin + " est vide, aucun fichier à traiter.");
+                    return;
+                }
+
+                // Calcule la date limite (cutoffDate) en soustrayant le nombre de jours définis (JoursEnArriere) à la date actuelle
+                DateTime cutoffDate = DateTime.Now.AddDays(-pathConfig.JoursEnArriere);
 
                 // Compteur pour suivre le nombre de fichiers supprimés
                 int deletionCount = 0;
@@ -72,7 +79,7 @@ namespace AutoPurge
                             {
                                 if (!pathConfig.Extensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
                                 {
-                                    continue; // L'extension ne correspond pas, on ignore le fichier
+                                    continue; // L'extension ne correspond pas, on ignore ce fichier
                                 }
                             }
 
@@ -112,10 +119,10 @@ namespace AutoPurge
                     }
                 }
 
-                // Si aucun fichier n'a été supprimé, logue un message spécifique
+                // Si aucun fichier n'a été supprimé, logue un message approprié
                 if (deletionCount == 0)
                 {
-                    _logger.LogInfo("Aucun fichier n'a été supprimé dans le dossier : " + pathConfig.Chemin + " car tous les fichiers sont récents.");
+                    _logger.LogInfo("Aucun fichier n'a été supprimé dans le dossier " + pathConfig.Chemin + " : tous les fichiers sont récents.");
                 }
             }
             catch (Exception ex)
