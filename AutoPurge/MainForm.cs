@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,28 +12,16 @@ using System.Windows.Forms;
 
 namespace AutoPurge
 {
-    static class Program
+    public partial class MainForm: Form
     {
-        [STAThread] // Important pour éviter l'erreur
-        static void Main(string[] args)
+        public MainForm()
         {
-            // Vérifier si l'application est lancée par le Task Scheduler (via un argument)
-            if (args.Length > 0 && args[0] == "auto")
-            {
-                LancerPurge(); // Exécute directement la purge
-                return; // Quitte après exécution
-            }
-
-            // Sinon, afficher l'interface utilisateur
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            InitializeComponent();
+            this.StartPosition = FormStartPosition.CenterScreen;
         }
 
-        /// <summary>
-        /// Fonction qui exécute la purge des fichiers
-        /// </summary>
-        static void LancerPurge()
+        // Lancer la purge lorsqu'on clique sur le bouton
+        private void btnStartPurge_Click(object sender, EventArgs e)
         {
             try
             {
@@ -73,6 +64,13 @@ namespace AutoPurge
             }
         }
 
+        // Ouvrir la configuration du fichier JSON lorsqu'on clique sur le bouton
+        private void btnConfigurePurge_Click(object sender, EventArgs e)
+        {
+            ConfigurationForm configForm = new ConfigurationForm();
+            configForm.ShowDialog(); // Ouvre la fenêtre en mode modal
+        }
+
         /// <summary>
         /// Attend que le fichier log soit totalement écrit et ne soit plus verrouillé.
         /// </summary>
@@ -84,6 +82,7 @@ namespace AutoPurge
             {
                 try
                 {
+                    // Vérifie si le fichier est accessible en lecture
                     using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
                     {
                         Console.WriteLine("Fichier log prêt pour l'envoi.");
