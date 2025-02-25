@@ -13,41 +13,41 @@ namespace AutoPurge
         private readonly string _configFilePath;
 
         /// <summary>
-        /// Initialise une nouvelle instance de la classe ConfigService.
+        /// Constructeur qui initialise le service avec le chemin du fichier de configuration.
         /// </summary>
-        /// <param name="configFilePath">Le chemin du fichier de configuration.</param>
+        /// <param name="configFilePath">Chemin vers le fichier JSON de configuration.</param>
         public ConfigService(string configFilePath)
         {
+            // Si le chemin est null, on lance une exception.
             _configFilePath = configFilePath ?? throw new ArgumentNullException(nameof(configFilePath));
         }
 
         /// <summary>
         /// Charge la configuration à partir du fichier JSON.
         /// </summary>
-        /// <returns>Un objet ConfigModel contenant la configuration chargée.</returns>
+        /// <returns>Un objet ConfigModel contenant la configuration.</returns>
         public ConfigModel LoadConfig()
         {
             try
             {
-                // Vérifie si le fichier de configuration existe
+                // Vérifie si le fichier existe
                 if (!File.Exists(_configFilePath))
                 {
                     throw new FileNotFoundException($"Le fichier de configuration est introuvable : {_configFilePath}");
                 }
 
-                // Lit le contenu JSON du fichier
+                // Lit tout le contenu du fichier JSON
                 string jsonContent = File.ReadAllText(_configFilePath);
+                // Désérialise le contenu en objet ConfigModel
                 var config = JsonConvert.DeserializeObject<ConfigModel>(jsonContent);
 
-                // Vérifie si la désérialisation a réussi
                 if (config == null)
                 {
                     throw new JsonException("Le fichier JSON est vide ou mal formaté.");
                 }
 
-                // Valide la configuration chargée
+                // Valide que la configuration est correcte
                 ValidateConfig(config);
-
                 return config;
             }
             catch (Exception ex)
@@ -65,10 +65,10 @@ namespace AutoPurge
         {
             try
             {
-                // Valide la configuration avant la sauvegarde
+                // Vérifie que la configuration est correcte avant de sauvegarder
                 ValidateConfig(config);
 
-                // Sérialise l'objet en JSON et l'écrit dans le fichier
+                // Sérialise l'objet en JSON avec une mise en forme indentée
                 string jsonContent = JsonConvert.SerializeObject(config, Formatting.Indented);
                 File.WriteAllText(_configFilePath, jsonContent);
             }
@@ -80,7 +80,7 @@ namespace AutoPurge
         }
 
         /// <summary>
-        /// Valide la configuration pour s'assurer qu'elle est correcte.
+        /// Valide la configuration pour s'assurer que toutes les données obligatoires sont présentes.
         /// </summary>
         /// <param name="config">L'objet ConfigModel à valider.</param>
         private void ValidateConfig(ConfigModel config)
@@ -90,37 +90,31 @@ namespace AutoPurge
                 throw new ArgumentNullException(nameof(config));
             }
 
-            // Vérifie si les informations email sont bien définies
             if (config.Email == null)
             {
                 throw new InvalidOperationException("Les informations d'email sont manquantes dans la configuration.");
             }
 
-            // Vérifie que les adresses email 'From' et 'To' ne sont pas vides
             if (string.IsNullOrWhiteSpace(config.Email.From) || string.IsNullOrWhiteSpace(config.Email.To))
             {
                 throw new InvalidOperationException("Les adresses email 'From' et 'To' sont obligatoires.");
             }
 
-            // Vérifie si au moins un chemin de purge est défini
             if (config.Paths == null || config.Paths.Count == 0)
             {
                 throw new InvalidOperationException("Aucun chemin de purge n'est défini.");
             }
 
-            // Vérifie chaque chemin de purge dans la configuration
             foreach (var path in config.Paths)
             {
                 if (string.IsNullOrWhiteSpace(path.Chemin))
                 {
                     throw new InvalidOperationException("Un chemin de purge est vide ou non défini.");
                 }
-
                 if (path.JoursEnArriere < 0)
                 {
                     throw new InvalidOperationException($"La valeur 'JoursEnArriere' pour le chemin {path.Chemin} doit être supérieure ou égale à 0.");
                 }
-
                 if (string.IsNullOrWhiteSpace(path.FormatDate))
                 {
                     throw new InvalidOperationException($"Le champ 'FormatDate' est vide pour le chemin {path.Chemin}.");
@@ -131,20 +125,20 @@ namespace AutoPurge
         /// <summary>
         /// Vérifie si le fichier de configuration existe.
         /// </summary>
-        /// <returns>True si le fichier existe, sinon False.</returns>
+        /// <returns>Vrai si le fichier existe, sinon Faux.</returns>
         public bool ConfigFileExists()
         {
             return File.Exists(_configFilePath);
         }
 
         /// <summary>
-        /// Crée un fichier de configuration par défaut si aucun n'existe.
+        /// Crée une configuration par défaut si aucun fichier n'existe.
         /// </summary>
         public void CreateDefaultConfigIfNotExists()
         {
             if (!ConfigFileExists())
             {
-                // Création d'une configuration par défaut
+                // Création d'une configuration par défaut avec des valeurs minimales
                 var defaultConfig = new ConfigModel
                 {
                     Email = new EmailConfig
@@ -169,7 +163,7 @@ namespace AutoPurge
                     }
                 };
 
-                // Sauvegarde de la configuration par défaut
+                // Sauvegarde de la configuration par défaut dans le fichier JSON
                 SaveConfig(defaultConfig);
             }
         }
