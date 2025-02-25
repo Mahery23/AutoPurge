@@ -9,31 +9,30 @@ namespace AutoPurge
     // Modèle principal de configuration
     public class ConfigModel
     {
-        // Configuration des emails
+        // Contient les informations d'email
         public EmailConfig Email { get; set; }
-        // Liste des chemins à surveiller pour la suppression automatique
+        // Liste des chemins à surveiller pour la suppression automatique des fichiers
         public List<PathConfig> Paths { get; set; }
     }
 
-    // Classe représentant la configuration de l'envoi des emails
+    // Classe représentant la configuration pour l'envoi des emails
     public class EmailConfig
     {
-        public string From { get; set; }
-        public string Password { get; set; }
-        public string To { get; set; }
-        public string Cc { get; set; }
-        public string Bcc { get; set; }
+        public string From { get; set; }      // Adresse de l'expéditeur
+        public string Password { get; set; }  // Mot de passe de l'expéditeur
+        public string To { get; set; }        // Adresse du destinataire
+        public string Cc { get; set; }        // Adresse(s) en copie (facultatif)
+        public string Bcc { get; set; }       // Adresse(s) en copie cachée (facultatif)
     }
 
-    // Classe représentant la configuration des chemins à surveiller
+    // Classe représentant la configuration d'un chemin à surveiller pour la purge
     public class PathConfig
     {
-        public string Chemin { get; set; }
-        public int JoursEnArriere { get; set; }
-        public string FormatDate { get; set; }
-        public List<string> Extensions { get; set; }
-        public List<string> Nom { get; set; }
-        public List<string> Exceptions { get; set; }
+        public string Chemin { get; set; }         // Le dossier à surveiller
+        public int JoursEnArriere { get; set; }     // Nombre de jours pour déterminer l'ancienneté d'un fichier
+        public string FormatDate { get; set; }       // Format de la date (pour comparaison ou affichage)
+        public List<string> Extensions { get; set; } // Liste des extensions à traiter (ex: ".txt", ".log")
+        public List<string> Nom { get; set; }        // Mots-clés à rechercher dans le nom du fichier
+        public List<string> Exceptions { get; set; } // Termes d'exclusion dans le nom du fichier
     }
 }
-
