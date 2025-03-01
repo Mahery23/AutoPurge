@@ -28,7 +28,7 @@ namespace AutoPurge
                 Console.WriteLine("Démarrage du programme AutoPurge...");
 
                 // Charger la configuration
-                string configFilePath = @"C:\Users\User\source\repos\AutoPurge\AutoPurge\bin\Debug\config.json";
+                string configFilePath = Path.Combine(Application.StartupPath, "config.json");
                 ConfigService configService = new ConfigService(configFilePath);
                 ConfigModel config = configService.LoadConfig();
 
