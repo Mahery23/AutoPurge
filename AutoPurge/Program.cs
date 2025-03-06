@@ -35,7 +35,7 @@ namespace AutoPurge
         {
             try
             {
-                Console.WriteLine("🚀 Démarrage du programme AutoPurge...");
+                Console.WriteLine("Démarrage du programme AutoPurge...");
 
                 // Charger la configuration en utilisant un chemin relatif
                 // Application.StartupPath correspond au dossier contenant l'exécutable (que ce soit en Debug ou en Release)
@@ -53,7 +53,7 @@ namespace AutoPurge
                 ILogger logger = new Logger();
                 string logFilePath = ((Logger)logger).LogFilePath; // Récupère le chemin du fichier de log
 
-                logger.LogInfo("📌 Début de la purge des fichiers...");
+                logger.LogInfo("Début de la purge des fichiers...");
 
                 // Exécuter la purge pour chaque chemin configuré
                 FilePurger purger = new FilePurger(logger);
@@ -61,16 +61,16 @@ namespace AutoPurge
                 {
                     purger.PurgeFiles(pathConfig);
                 }
-                logger.LogInfo("✅ Purge terminée avec succès.");
+                logger.LogInfo("Purge terminée avec succès.");
 
                 // Attendre que le fichier de log soit complètement écrit et libéré
                 WaitForLogFile(logFilePath);
 
                 // Envoyer l'email récapitulatif avec le fichier de log en pièce jointe
-                logger.LogInfo("📩 Envoi de l'email récapitulatif...");
+                logger.LogInfo("Envoi de l'email récapitulatif...");
                 EmailSender emailSender = new EmailSender(config.Email);
                 emailSender.SendEmail(logFilePath);
-                logger.LogInfo("📨 Email envoyé avec succès.");
+                logger.LogInfo("Email envoyé avec succès.");
 
                 MessageBox.Show("Processus terminé avec succès.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -94,18 +94,18 @@ namespace AutoPurge
                     // Tente d'ouvrir le fichier en mode lecture exclusive pour vérifier s'il est libre
                     using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
                     {
-                        Console.WriteLine("✅ Fichier log prêt pour l'envoi.");
+                        Console.WriteLine("Fichier log prêt pour l'envoi.");
                         return;
                     }
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine("⏳ Fichier log encore en cours d'écriture... Attente...");
+                    Console.WriteLine("Fichier log encore en cours d'écriture... Attente...");
                     Thread.Sleep(500); // Attendre 500 ms avant de réessayer
                     attempts++;
                 }
             }
-            Console.WriteLine("⚠️ Attention : Le fichier log est peut-être encore en cours d'utilisation.");
+            Console.WriteLine("Attention : Le fichier log est peut-être encore en cours d'utilisation.");
         }
     }
 }

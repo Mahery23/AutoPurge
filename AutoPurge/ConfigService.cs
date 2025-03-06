@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace AutoPurge
 {
@@ -11,6 +13,10 @@ namespace AutoPurge
     public class ConfigService
     {
         private readonly string _configFilePath;
+        private readonly Regex _emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled); // Regex pour validation email
+        private readonly Regex _pathRegex = new Regex(@"^([a-zA-Z]:\\|\/).*", RegexOptions.Compiled);  // Regex pour chemin
+        private readonly Regex _dateFormatRegex = new Regex(@"^[yMd\-\/]+$", RegexOptions.Compiled);  // Regex pour format de date
+        private readonly Regex _extensionRegex = new Regex(@"^\.\w+$", RegexOptions.Compiled);  // Regex pour extension
 
         /// <summary>
         /// Constructeur qui initialise le service avec le chemin du fichier de configuration.
@@ -85,42 +91,103 @@ namespace AutoPurge
         /// <param name="config">L'objet ConfigModel à valider.</param>
         private void ValidateConfig(ConfigModel config)
         {
+            // Vérifie si l'objet 'config' est null
             if (config == null)
             {
                 throw new ArgumentNullException(nameof(config));
             }
 
+            // Vérifie si la section Email est présente
             if (config.Email == null)
             {
-                throw new InvalidOperationException("Les informations d'email sont manquantes dans la configuration.");
+                throw new InvalidOperationException("Les informations d'email sont manquantes.");
             }
 
-            if (string.IsNullOrWhiteSpace(config.Email.From) || string.IsNullOrWhiteSpace(config.Email.To))
+            // Vérifie si les adresses email 'From' et 'To' sont valides (obligatoires)
+            if (!_emailRegex.IsMatch(config.Email.From) || !_emailRegex.IsMatch(config.Email.To))
             {
-                throw new InvalidOperationException("Les adresses email 'From' et 'To' sont obligatoires.");
+                throw new InvalidOperationException("Les adresses email 'From' et 'To' doivent être valides.");
             }
 
+            // Vérifie si l'adresse 'Cc' est valide (seulement si elle est renseignée)
+            if (!string.IsNullOrWhiteSpace(config.Email.Cc) && !_emailRegex.IsMatch(config.Email.Cc))
+            {
+                throw new InvalidOperationException("L'adresse email 'Cc' est invalide.");
+            }
+
+            // Vérifie si l'adresse 'Bcc' est valide (seulement si elle est renseignée)
+            if (!string.IsNullOrWhiteSpace(config.Email.Bcc) && !_emailRegex.IsMatch(config.Email.Bcc))
+            {
+                throw new InvalidOperationException("L'adresse email 'Bcc' est invalide.");
+            }
+
+            // Vérifie si la section 'Paths' existe et qu'elle contient au moins un élément
             if (config.Paths == null || config.Paths.Count == 0)
             {
                 throw new InvalidOperationException("Aucun chemin de purge n'est défini.");
             }
 
+            // Vérification de chaque chemin dans la liste 'Paths'
             foreach (var path in config.Paths)
             {
+                // Vérifie si le chemin est vide ou ne correspond pas au format d'un chemin valide (obligatoire)
                 if (string.IsNullOrWhiteSpace(path.Chemin))
                 {
-                    throw new InvalidOperationException("Un chemin de purge est vide ou non défini.");
+                    throw new InvalidOperationException("Veuillez sélectionner un chemin.");
                 }
-                if (path.JoursEnArriere < 0)
+                else if (!_pathRegex.IsMatch(path.Chemin))
                 {
-                    throw new InvalidOperationException($"La valeur 'JoursEnArriere' pour le chemin {path.Chemin} doit être supérieure ou égale à 0.");
+                    throw new InvalidOperationException($"Le chemin '{path.Chemin}' est invalide.");
                 }
-                if (string.IsNullOrWhiteSpace(path.FormatDate))
+
+                // Vérifie si la valeur 'JoursEnArriere' est absente ou invalide (optionnel)
+                if (path.JoursEnArriere < 0 || path.JoursEnArriere > 600)
                 {
-                    throw new InvalidOperationException($"Le champ 'FormatDate' est vide pour le chemin {path.Chemin}.");
+                    throw new InvalidOperationException("Veuillez entrer une valeur valide pour 'JoursEnArriere' (entre 0 et 600).");
+                }
+
+                // Vérifie si le format de date est valide (obligatoire)
+                if (!string.IsNullOrWhiteSpace(path.FormatDate) && path.FormatDate.Length > 20)
+                {
+                    throw new InvalidOperationException($"Le format de date pour le chemin {path.Chemin} dépasse la longueur maximale de 20 caractères.");
+                }
+
+                // Vérifie que chaque extension est valide et ne dépasse pas 10 caractères (optionnel)
+                if (path.Extensions != null)
+                {
+                    foreach (var ext in path.Extensions)
+                    {
+                        if (!_extensionRegex.IsMatch(ext))
+                        {
+                            throw new InvalidOperationException($"L'extension '{ext}' est invalide.");
+                        }
+                        if (ext.Length > 10)
+                        {
+                            throw new InvalidOperationException($"L'extension '{ext}' est trop longue (max 10 caractères).");
+                        }
+                    }
+                }
+
+                // Vérifie que le nom ne dépasse pas 100 caractères (optionnel)
+                if (path.Nom != null && path.Nom.Any(nom => nom.Length > 100))
+                {
+                    throw new InvalidOperationException($"Un nom dans la liste dépasse la longueur maximale de 100 caractères.");
+                }
+
+                // Vérifie que chaque exception ne dépasse pas 200 caractères (optionnel)
+                if (path.Exceptions != null)
+                {
+                    foreach (var exception in path.Exceptions)
+                    {
+                        if (exception.Length > 200)
+                        {
+                            throw new InvalidOperationException($"L'exception '{exception}' est trop longue (max 200 caractères).");
+                        }
+                    }
                 }
             }
         }
+
 
         /// <summary>
         /// Vérifie si le fichier de configuration existe.
