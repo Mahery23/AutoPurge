@@ -33,6 +33,7 @@ namespace AutoPurge
         public string FormatDate { get; set; }       // Format de la date (pour comparaison ou affichage)
         public List<string> Extensions { get; set; } // Liste des extensions à traiter (ex: ".txt", ".log")
         public List<string> Nom { get; set; }        // Mots-clés à rechercher dans le nom du fichier
-        public List<string> Exceptions { get; set; } // Termes d'exclusion dans le nom du fichier
+        public List<string> Exceptions { get; set; } // Termes d'exclusion dans le nom du fichier                                                    
+        public bool SupprimerDossier { get; set; }  // Nouvelle propriété : si vrai, supprime le dossier (et sous-dossiers vides) après la purge
     }
 }
